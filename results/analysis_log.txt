@@ -1,0 +1,68 @@
+
+=== Step 1/6 - Data loading and cleaning ===
+  [  0.0s] reading data/quality_gates.csv.gz and build/*.parquet
+  [  2.5s] raw: 1,636,609 rows from 3,497 repos; duplicates removed: 536
+  [  2.5s] excluded 24 repos with <10% merged PRs (5,466 PRs, 1,377 failing)
+  [  2.5s] analysis set: 1,630,607 PRs in 3,473 repos; PASS 1,508,981, FAIL 121,626 (7.5%)
+  [  2.5s] FAIL with parsed conditions: 80,697; without details: 40,929; parsed conditions: 104,624
+  [  2.5s] PRs per repo: median 237 (IQR 99-529), max 22,487
+
+=== Step 2/6 - RQ1: prevalence and within-project effect of a failing gate ===
+  [  5.0s] merge rate PASS 91.1% vs FAIL 86.2% -> 104,862 failing PRs merged, 16,764 held back
+  [  5.0s] rejection risk ratio 1.54; chi2 = 3,129; Cramer's V = 0.044
+  [  5.0s] Mantel-Haenszel OR (stratified by repo, 2,778 repos) = 0.584 [0.573, 0.596]
+  [  5.0s] LPM with repo FE, FAIL effect: -5.31 pp [95% CI -5.98, -4.65], p = 4.9e-53
+  [  5.0s] gate yield = 5.84% (about 1 in 17 failing PRs held back)
+  [  5.0s] sensitivity - only FAIL with conditions: -5.65 pp [95% CI -6.43, -4.87], p = 1.6e-44
+  [  5.0s] sensitivity - incl. excluded repos:    -5.27 pp [95% CI -5.93, -4.60], p = 1.7e-52
+  [  5.0s] 1,890 repos with >=5 PASS & >=5 FAIL: median delta 4.9 pp, 32.0% merge FAIL >= PASS
+
+=== Step 3/6 - RQ2: heterogeneity across projects ===
+  [  8.2s] 828 repos override 100%, 161 override 0% (median n_fail of the 100% repos: 3)
+  [  8.2s] 1,471 repos with >=10 failing PRs: median override 87.2% (IQR 75.6%-94.7%); <50%: 4.8%; >=90%: 43.3%
+  [  8.2s] empirical Bayes beta-binomial prior: alpha=3.86, beta=0.97, mean 80.0%; shrunken <50%: 4.0%
+  [  8.2s] typology (Fisher + BH-FDR 5%, TOST +/-10 pp):
+  [  8.2s]    Discounting    293 repos (15.5%)  median merge PASS 93.0% / FAIL 71.4%  share of held-back 40.1%
+  [  8.2s]    Enforcing      118 repos (6.2%)  median merge PASS 88.1% / FAIL 31.9%  share of held-back 9.7%
+  [  8.2s]    Inconclusive   940 repos (49.7%)  median merge PASS 90.1% / FAIL 84.6%  share of held-back 24.5%
+  [  8.2s]    Indifferent    502 repos (26.6%)  median merge PASS 96.2% / FAIL 97.3%  share of held-back 22.9%
+  [  8.2s]    Inverted        37 repos (2.0%)  median merge PASS 68.2% / FAIL 95.5%  share of held-back 2.7%
+  [  8.2s] customised gates: 507 of 2539 repos; FAIL x custom interaction +0.78 pp [-0.79, +2.35], p = 0.33
+
+=== Step 4/6 - RQ3: which failed conditions are enforced ===
+  [ 11.1s]    Coverage                n=33,865  override 89.4%  FE -1.92 pp [-2.77, -1.08]
+  [ 11.1s]    Duplication             n=28,691  override 86.7%  FE -1.32 pp [-2.09, -0.54]
+  [ 11.1s]    Maintainability rating  n=10,066  override 85.8%  FE -2.78 pp [-4.43, -1.12]
+  [ 11.1s]    Reliability rating      n=13,483  override 78.9%  FE -7.82 pp [-9.47, -6.17]
+  [ 11.1s]    Security rating         n= 2,174  override 70.1%  FE -9.43 pp [-13.18, -5.68]
+  [ 11.1s]    Hotspots review         n=11,250  override 75.5%  FE -9.23 pp [-10.57, -7.88]
+  [ 11.1s]    Issues (severity)       n= 1,266  override 80.9%  FE -7.97 pp [-12.93, -3.01]
+  [ 11.1s]    New issues              n= 1,898  override 81.2%  FE -8.21 pp [-28.94, +12.52]
+  [ 11.1s]    PR size                 n=   630  override 98.7%  FE +1.91 pp [-8.61, +12.43]
+  [ 11.1s] override by # failed conditions: 1: 87.0%, 2: 83.1%, 3: 79.0%, 4+: 76.9%
+  [ 11.1s] FE: 2nd condition -3.91 pp, 3rd+ -4.32 pp (on top of first failure -4.64 pp)
+  [ 11.1s] sandbox check: E security rating override 28.3% (n=2,159) with sandbox vs 68.3% (n=895) without
+
+=== Step 5/6 - RQ4: does the magnitude of the violation matter ===
+  [ 11.7s] coverage: median gap 45.2 pp; 0% coverage in 36.5% of conditions (12,478), override 90.0%
+  [ 11.7s] coverage slope per 10 pp gap: -0.70 pp [95% CI -0.90, -0.51], p = 3.6e-12
+  [ 11.7s] coverage near-miss (<=5 pp): +3.88 pp [95% CI +2.58, +5.19], p = 7.6e-09
+  [ 11.7s] duplication: median excess 9.3 pp; slope per 10 pp: +0.26 pp [95% CI -0.01, +0.54], p = 0.059
+  [ 11.7s] Reliability rating per grade step: -2.80 pp [95% CI -4.27, -1.34], p = 0.00018
+  [ 11.7s] Security rating per grade step: -3.57 pp [95% CI -8.42, +1.29], p = 0.15
+  [ 11.7s] Maintainability rating per grade step: +0.25 pp [95% CI -0.92, +1.43], p = 0.67
+  [ 11.7s] hotspots per doubling: -1.90 pp [95% CI -2.78, -1.03], p = 2.1e-05
+  [ 11.7s] cov_value_bins: 0 90.0% (n=12,414), 0–20 88.3% (n=4,136), 20–40 88.6% (n=3,800), 40–60 88.6% (n=5,208), 60–70 89.1% (n=3,418), 70–80 90.9% (n=4,540), ≥80 88.2% (n=349)
+  [ 11.7s] cov_value_bins_default: 0 89.6% (n=9,432), 0–20 86.8% (n=2,882), 20–40 87.3% (n=2,579), 40–60 88.3% (n=3,663), 60–70 88.5% (n=2,835), 70–80 90.9% (n=4,244)
+  [ 11.7s] dup_value_bins: 10–20 86.2% (n=6,862), 20–40 86.7% (n=5,496), 5–10 86.4% (n=7,001), >40 88.9% (n=4,564), ≤5 85.9% (n=4,768)
+  [ 11.7s] dup_value_bins_default: 10–20 85.7% (n=6,198), 20–40 86.1% (n=4,837), 5–10 86.3% (n=6,679), >40 89.1% (n=3,786), ≤5 85.9% (n=4,684)
+
+=== Step 6/6 - Figures and outputs ===
+  [ 12.6s] saved figures/fig_gate_effect.pdf (+ .png)
+  [ 12.9s] saved figures/fig_projects.pdf (+ .png)
+  [ 13.1s] saved figures/fig_conditions.pdf (+ .png)
+  [ 13.6s] saved figures/fig_magnitude.pdf (+ .png)
+  [ 13.6s] saved results/results.json and results/tables/typology.csv, repo_level.csv, conditions.csv
+  [ 13.6s] saved results/paper_numbers.md (each number in the paper, with its key in results.json)
+
+Done in 13.6s.
